@@ -59,27 +59,29 @@ struct InterfaceVarABIAttributeStorage : public AttributeStorage {
 };
 
 struct VerCapExtAttributeStorage : public AttributeStorage {
-  using KeyTy = std::tuple<Attribute, Attribute, Attribute>;
+  using KeyTy = std::tuple<Attribute, Attribute, Attribute, ExecutionModel>;
 
   VerCapExtAttributeStorage(Attribute version, Attribute capabilities,
-                            Attribute extensions)
-      : version(version), capabilities(capabilities), extensions(extensions) {}
+                            Attribute extensions, ExecutionModel executionModel)
+      : version(version), capabilities(capabilities), extensions(extensions),
+        executionModel(executionModel) {}
 
   bool operator==(const KeyTy &key) const {
     return std::get<0>(key) == version && std::get<1>(key) == capabilities &&
-           std::get<2>(key) == extensions;
+           std::get<2>(key) == extensions && std::get<3>(key) == executionModel;
   }
 
   static VerCapExtAttributeStorage *
   construct(AttributeStorageAllocator &allocator, const KeyTy &key) {
     return new (allocator.allocate<VerCapExtAttributeStorage>())
         VerCapExtAttributeStorage(std::get<0>(key), std::get<1>(key),
-                                  std::get<2>(key));
+                                  std::get<2>(key), std::get<3>(key));
   }
 
   Attribute version;
   Attribute capabilities;
   Attribute extensions;
+  ExecutionModel executionModel;
 };
 
 struct TargetEnvAttributeStorage : public AttributeStorage {
@@ -192,7 +194,8 @@ LogicalResult spirv::InterfaceVarABIAttr::verifyInvariants(
 
 spirv::VerCapExtAttr spirv::VerCapExtAttr::get(
     spirv::Version version, ArrayRef<spirv::Capability> capabilities,
-    ArrayRef<spirv::Extension> extensions, MLIRContext *context) {
+    ArrayRef<spirv::Extension> extensions, MLIRContext *context,
+    spirv::ExecutionModel executionModel) {
   Builder b(context);
 
   auto versionAttr = b.getI32IntegerAttr(static_cast<uint32_t>(version));
@@ -207,15 +210,17 @@ spirv::VerCapExtAttr spirv::VerCapExtAttr::get(
   for (spirv::Extension ext : extensions)
     extAttrs.push_back(b.getStringAttr(spirv::stringifyExtension(ext)));
 
-  return get(versionAttr, b.getArrayAttr(capAttrs), b.getArrayAttr(extAttrs));
+  return get(versionAttr, b.getArrayAttr(capAttrs), b.getArrayAttr(extAttrs),
+             executionModel);
 }
 
-spirv::VerCapExtAttr spirv::VerCapExtAttr::get(IntegerAttr version,
-                                               ArrayAttr capabilities,
-                                               ArrayAttr extensions) {
+spirv::VerCapExtAttr
+spirv::VerCapExtAttr::get(IntegerAttr version, ArrayAttr capabilities,
+                          ArrayAttr extensions,
+                          spirv::ExecutionModel executionModel) {
   assert(version && capabilities && extensions);
   MLIRContext *context = version.getContext();
-  return Base::get(context, version, capabilities, extensions);
+  return Base::get(context, version, capabilities, extensions, executionModel);
 }
 
 StringRef spirv::VerCapExtAttr::getKindName() { return "vce"; }
@@ -241,6 +246,10 @@ ArrayAttr spirv::VerCapExtAttr::getExtensionsAttr() {
   return llvm::cast<ArrayAttr>(getImpl()->extensions);
 }
 
+spirv::ExecutionModel spirv::VerCapExtAttr::getExecutionModel() const {
+  return getImpl()->executionModel;
+}
+
 spirv::VerCapExtAttr::cap_iterator::cap_iterator(ArrayAttr::iterator it)
     : llvm::mapped_iterator<ArrayAttr::iterator,
                             spirv::Capability (*)(Attribute)>(
@@ -260,7 +269,8 @@ ArrayAttr spirv::VerCapExtAttr::getCapabilitiesAttr() {
 
 LogicalResult spirv::VerCapExtAttr::verifyInvariants(
     function_ref<InFlightDiagnostic()> emitError, IntegerAttr version,
-    ArrayAttr capabilities, ArrayAttr extensions) {
+    ArrayAttr capabilities, ArrayAttr extensions,
+    ExecutionModel executionModel) {
   if (!version.getType().isSignlessInteger(32))
     return emitError() << "expected 32-bit integer for version";
 
@@ -515,11 +525,22 @@ static Attribute parseVerCapExtAttr(DialectAsmParser &parser) {
     extensionsAttr = builder.getArrayAttr(extensions);
   }
 
+  ExecutionModel executionModelAttr = ExecutionModel::GLCompute;
+  if (!parser.parseOptionalComma()) {
+    StringRef executionModel;
+    if (!(parser.parseKeyword(&executionModel))) {
+      if (auto executionSymbol =
+              spirv::symbolizeExecutionModel(executionModel)) {
+        executionModelAttr = *executionSymbol;
+      }
+    }
+  }
+
   if (parser.parseGreater())
     return {};
 
   return spirv::VerCapExtAttr::get(versionAttr, capabilitiesAttr,
-                                   extensionsAttr);
+                                   extensionsAttr, executionModelAttr);
 }
 
 /// Parses a spirv::TargetEnvAttr.
@@ -629,7 +650,7 @@ static void print(spirv::VerCapExtAttr triple, DialectAsmPrinter &printer) {
           << ", "
           << llvm::interleaved_array(
                  triple.getExtensionsAttr().getAsValueRange<StringAttr>())
-          << ">";
+          << ", " << triple.getExecutionModel() << ">";
 }
 
 static void print(spirv::TargetEnvAttr targetEnv, DialectAsmPrinter &printer) {

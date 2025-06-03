@@ -93,11 +93,14 @@ public:
   using Base::Base;
 
   /// Gets a VerCapExtAttr instance.
-  static VerCapExtAttr get(Version version, ArrayRef<Capability> capabilities,
-                           ArrayRef<Extension> extensions,
-                           MLIRContext *context);
-  static VerCapExtAttr get(IntegerAttr version, ArrayAttr capabilities,
-                           ArrayAttr extensions);
+  static VerCapExtAttr
+  get(Version version, ArrayRef<Capability> capabilities,
+      ArrayRef<Extension> extensions, MLIRContext *context,
+      spirv::ExecutionModel executionModel = spirv::ExecutionModel::GLCompute);
+
+  static VerCapExtAttr
+  get(IntegerAttr version, ArrayAttr capabilities, ArrayAttr extensions,
+      spirv::ExecutionModel executionModel = spirv::ExecutionModel::GLCompute);
 
   /// Returns the attribute kind's name (without the 'spirv.' prefix).
   static StringRef getKindName();
@@ -116,6 +119,8 @@ public:
   ext_range getExtensions();
   /// Returns the extensions as a string array attribute.
   ArrayAttr getExtensionsAttr();
+  /// Returns the ExecutionModel
+  spirv::ExecutionModel getExecutionModel() const;
 
   struct cap_iterator final
       : public llvm::mapped_iterator<ArrayAttr::iterator,
@@ -132,7 +137,7 @@ public:
   static LogicalResult
   verifyInvariants(function_ref<InFlightDiagnostic()> emitError,
                    IntegerAttr version, ArrayAttr capabilities,
-                   ArrayAttr extensions);
+                   ArrayAttr extensions, ExecutionModel executionModel);
 
   static constexpr StringLiteral name = "spirv.ver_cap_ext";
 };

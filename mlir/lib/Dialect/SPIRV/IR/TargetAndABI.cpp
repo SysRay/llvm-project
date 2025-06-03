@@ -220,13 +220,7 @@ spirv::getAddressingModel(spirv::TargetEnvAttr targetAttr,
 
 FailureOr<spirv::ExecutionModel>
 spirv::getExecutionModel(spirv::TargetEnvAttr targetAttr) {
-  for (spirv::Capability cap : targetAttr.getCapabilities()) {
-    if (cap == spirv::Capability::Kernel)
-      return spirv::ExecutionModel::Kernel;
-    if (cap == spirv::Capability::Shader)
-      return spirv::ExecutionModel::GLCompute;
-  }
-  return failure();
+  return targetAttr.getTripleAttr().getExecutionModel();
 }
 
 FailureOr<spirv::MemoryModel>
