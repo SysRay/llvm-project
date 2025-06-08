@@ -519,7 +519,7 @@ func.func @fmix_vector(%arg0 : vector<3xf32>, %arg1 : vector<3xf32>, %arg2 : vec
 // -----
 
 //===----------------------------------------------------------------------===//
-// spirv.GL.Exp
+// spirv.GL.FindUMsb
 //===----------------------------------------------------------------------===//
 
 func.func @findumsb(%arg0 : i32) -> () {
@@ -539,6 +539,56 @@ func.func @findumsb_vector(%arg0 : vector<3xi32>) -> () {
 func.func @findumsb(%arg0 : i64) -> () {
   // expected-error @+1 {{operand #0 must be Int32 or vector of Int32}}
   %2 = spirv.GL.FindUMsb %arg0 : i64
+  return
+}
+
+// -----
+
+//===----------------------------------------------------------------------===//
+// spirv.GL.FindSMsb
+//===----------------------------------------------------------------------===//
+
+func.func @findsmsb(%arg0 : i32) -> () {
+  // CHECK: spirv.GL.FindSMsb {{%.*}} : i32
+  %2 = spirv.GL.FindSMsb %arg0 : i32
+  return
+}
+
+func.func @findsmsb_vector(%arg0 : vector<3xi32>) -> () {
+  // CHECK: spirv.GL.FindSMsb {{%.*}} : vector<3xi32>
+  %2 = spirv.GL.FindSMsb %arg0 : vector<3xi32>
+  return
+}
+
+// -----
+
+func.func @findsmsb(%arg0 : i64) -> () {
+  // expected-error @+1 {{operand #0 must be Int32 or vector of Int32}}
+  %2 = spirv.GL.FindSMsb %arg0 : i64
+  return
+}
+
+//===----------------------------------------------------------------------===//
+// spirv.GL.FinILsb
+//===----------------------------------------------------------------------===//
+
+func.func @findilsb(%arg0 : i32) -> () {
+  // CHECK: spirv.GL.FinILsb {{%.*}} : i32
+  %2 = spirv.GL.FinILsb %arg0 : i32
+  return
+}
+
+func.func @findilsb_vector(%arg0 : vector<3xi32>) -> () {
+  // CHECK: spirv.GL.FinILsb {{%.*}} : vector<3xi32>
+  %2 = spirv.GL.FinILsb %arg0 : vector<3xi32>
+  return
+}
+
+// -----
+
+func.func @findilsb(%arg0 : i64) -> () {
+ // CHECK: spirv.GL.FinILsb {{%.*}} : i64
+  %2 = spirv.GL.FinILsb %arg0 : i64
   return
 }
 
