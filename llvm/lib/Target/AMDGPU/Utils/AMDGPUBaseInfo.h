@@ -1356,6 +1356,7 @@ unsigned getMaxNumUserSGPRs(const MCSubtargetInfo &STI);
 bool isSI(const MCSubtargetInfo &STI);
 bool isCI(const MCSubtargetInfo &STI);
 bool isVI(const MCSubtargetInfo &STI);
+bool isGFX6_GFX7(const MCSubtargetInfo &STI);
 bool isGFX9(const MCSubtargetInfo &STI);
 bool isGFX9_GFX10(const MCSubtargetInfo &STI);
 bool isGFX9_GFX10_GFX11(const MCSubtargetInfo &STI);

@@ -55,9 +55,6 @@ AMDGPUDisassembler::AMDGPUDisassembler(const MCSubtargetInfo &STI,
     : MCDisassembler(STI, Ctx), MCII(MCII), MRI(*Ctx.getRegisterInfo()),
       MAI(*Ctx.getAsmInfo()), TargetMaxInstBytes(MAI.getMaxInstLength(&STI)),
       CodeObjectVersion(AMDGPU::getDefaultAMDHSACodeObjectVersion()) {
-  // ToDo: AMDGPUDisassembler supports only VI ISA.
-  if (!STI.hasFeature(AMDGPU::FeatureGCN3Encoding) && !isGFX10Plus())
-    report_fatal_error("Disassembly not yet supported for subtarget");
 
   for (auto [Symbol, Code] : AMDGPU::UCVersion::getGFXVersions())
     createConstantSymbolExpr(Symbol, Code);
@@ -650,6 +647,10 @@ DecodeStatus AMDGPUDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
           tryDecodeInst(DecoderTableGFX90A64, MI, QW, Address, CS))
         break;
 
+      if (isSI() &&
+          (tryDecodeInst(DecoderTableGFX6GFX764, MI, QW, Address, CS) || tryDecodeInst(DecoderTableGFX664, MI, QW, Address, CS)  ||tryDecodeInst(DecoderTableGFX864, MI, QW, Address, CS) ))
+        break;
+
       if ((isVI() || isGFX9()) &&
           tryDecodeInst(DecoderTableGFX864, MI, QW, Address, CS))
         break;
@@ -685,6 +686,10 @@ DecodeStatus AMDGPUDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     // Try decode 32-bit instruction
     if (Bytes.size() >= 4) {
       const uint32_t DW = eatBytes<uint32_t>(Bytes);
+
+      if ((isSI()) &&
+          tryDecodeInst(DecoderTableGFX6GFX732, MI, DW, Address, CS))
+        break;
 
       if ((isVI() || isGFX9()) &&
           tryDecodeInst(DecoderTableGFX832, MI, DW, Address, CS))
@@ -1985,6 +1990,10 @@ MCOperand AMDGPUDisassembler::decodeVersionImm(unsigned Imm) const {
     E = MCBinaryExpr::createOr(E, UCVersionMDPExpr, Ctx);
 
   return MCOperand::createExpr(E);
+}
+
+bool AMDGPUDisassembler::isSI() const {
+  return AMDGPU::isSI(STI);
 }
 
 bool AMDGPUDisassembler::isVI() const {

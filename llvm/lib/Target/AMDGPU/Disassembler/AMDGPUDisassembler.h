@@ -78,9 +78,7 @@ public:
   bool operator!=(const DecoderUInt128 &RHS) {
     return Lo != RHS.Lo || Hi != RHS.Hi;
   }
-  bool operator!=(const int &RHS) {
-    return *this != DecoderUInt128(RHS);
-  }
+  bool operator!=(const int &RHS) { return *this != DecoderUInt128(RHS); }
   friend raw_ostream &operator<<(raw_ostream &OS, const DecoderUInt128 &RHS) {
     return OS << APInt(128, {RHS.Lo, RHS.Hi});
   }
@@ -121,14 +119,14 @@ public:
                               ArrayRef<uint8_t> Bytes, uint64_t Address,
                               raw_ostream &CS) const override;
 
-  const char* getRegClassName(unsigned RegClassID) const;
+  const char *getRegClassName(unsigned RegClassID) const;
 
   MCOperand createRegOperand(unsigned int RegId) const;
   MCOperand createRegOperand(unsigned RegClassID, unsigned Val) const;
   MCOperand createSRegOperand(unsigned SRegClassID, unsigned Val) const;
   MCOperand createVGPR16Operand(unsigned RegIdx, bool IsHi) const;
 
-  MCOperand errOperand(unsigned V, const Twine& ErrMsg) const;
+  MCOperand errOperand(unsigned V, const Twine &ErrMsg) const;
 
   template <typename InsnType>
   DecodeStatus tryDecodeInst(const uint8_t *Table, MCInst &MI, InsnType Inst,
@@ -220,6 +218,7 @@ public:
 
   const MCInstrInfo *getMCII() const { return MCII.get(); }
 
+  bool isSI() const;
   bool isVI() const;
   bool isGFX9() const;
   bool isGFX90A() const;
@@ -249,15 +248,14 @@ private:
 public:
   AMDGPUSymbolizer(MCContext &Ctx, std::unique_ptr<MCRelocationInfo> &&RelInfo,
                    void *disInfo)
-                   : MCSymbolizer(Ctx, std::move(RelInfo)), DisInfo(disInfo) {}
+      : MCSymbolizer(Ctx, std::move(RelInfo)), DisInfo(disInfo) {}
 
   bool tryAddingSymbolicOperand(MCInst &Inst, raw_ostream &cStream,
                                 int64_t Value, uint64_t Address, bool IsBranch,
                                 uint64_t Offset, uint64_t OpSize,
                                 uint64_t InstSize) override;
 
-  void tryAddingPcLoadReferenceComment(raw_ostream &cStream,
-                                       int64_t Value,
+  void tryAddingPcLoadReferenceComment(raw_ostream &cStream, int64_t Value,
                                        uint64_t Address) override;
 
   ArrayRef<uint64_t> getReferencedAddresses() const override {
