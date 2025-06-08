@@ -434,6 +434,8 @@ def SPIRV_GlobalVariableOp : SPIRV_Op<"GlobalVariable", [InModuleScope, Symbol]>
     OpBuilder<(ins "Type":$type, "StringRef":$name,
       "unsigned":$descriptorSet, "unsigned":$binding)>,
     OpBuilder<(ins "Type":$type, "StringRef":$name,
+      "unsigned":$location)>,
+    OpBuilder<(ins "Type":$type, "StringRef":$name,
       "spirv::BuiltIn":$builtin)>,
     OpBuilder<(ins "Type":$type,
                    "StringRef":$sym_name,

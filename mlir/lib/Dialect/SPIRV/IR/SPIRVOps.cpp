@@ -1128,6 +1128,15 @@ void spirv::GlobalVariableOp::build(OpBuilder &builder, OperationState &state,
 
 void spirv::GlobalVariableOp::build(OpBuilder &builder, OperationState &state,
                                     Type type, StringRef name,
+                                    unsigned location) {
+  build(builder, state, TypeAttr::get(type), builder.getStringAttr(name));
+  state.addAttribute(
+      spirv::SPIRVDialect::getAttributeName(spirv::Decoration::Location),
+      builder.getI32IntegerAttr(location));
+}
+
+void spirv::GlobalVariableOp::build(OpBuilder &builder, OperationState &state,
+                                    Type type, StringRef name,
                                     spirv::BuiltIn builtin) {
   build(builder, state, TypeAttr::get(type), builder.getStringAttr(name));
   state.addAttribute(
