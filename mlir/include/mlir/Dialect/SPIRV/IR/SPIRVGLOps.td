@@ -1222,4 +1222,39 @@ def SPIRV_GLFractOp : SPIRV_GLUnaryArithmeticOp<"Fract", 10, SPIRV_Float> {
   }];
 }
 
+
+def SPIRV_GLUnpackHalf2x16Op : SPIRV_GLUnaryOp<"UnpackHalf2x16", 62,
+                                                      SPIRV_Integer,
+                                                      SPIRV_Float> {
+  let summary = "Unpack a 32-bit unsigned integer into two 16-bit half-precision floats";
+
+  let description = [{
+    Unpack a 32-bit unsigned integer into a 2-component vector of 16-bit
+    half-precision floating-point values.
+
+    The first component of the result is obtained by converting the lower
+    16 bits of v to a half-precision floating-point value. The second
+    component is obtained by converting the upper 16 bits of v to a
+    half-precision floating-point value.
+
+    <!-- End of AutoGen section -->
+
+    #### Example:
+
+    ```mlir
+    %0 = spirv.GL.UnpackHalf2x16 %value : i32 -> vector<2xf16>
+    ```
+  }];
+
+  let arguments = (ins
+    SPIRV_ScalarOrVectorOf<SPIRV_Int32>:$operand
+  );
+
+  let results = (outs
+    SPIRV_VectorOf<SPIRV_Float32>:$result
+  );
+
+  let assemblyFormat = "$operand attr-dict `:` type($operand) `->` type($result)";
+}
+
 #endif // MLIR_DIALECT_SPIRV_IR_GL_OPS
