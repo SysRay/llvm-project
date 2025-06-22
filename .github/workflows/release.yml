@@ -2,10 +2,6 @@ name: Build LLVM
 
 on:
   workflow_dispatch:
-    inputs:
-      gitreletag:
-        description: Git Release Tag
-        type: string
 
 jobs:
   build:
@@ -14,6 +10,11 @@ jobs:
     steps:
       - name: Pull main repo
         uses: actions/checkout@v4
+
+      - name: Get release tag
+        run: |
+          $_DATENOW=& Get-Date -uformat %Y%b%d
+          "CURRVERSION=$_DATENOW" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Setup
         run: |
@@ -32,7 +33,7 @@ jobs:
       - name: Release stuff
         uses: softprops/action-gh-release@v2
         with:
-          gitreletag: ${{ inputs.gitreletag }}
+          tag_name: ${{ env.CURRVERSION }}
           make_latest: true
           token: ${{ secrets.GIT_RELEASE_TOKEN }}
           files: ./release_bin.zip
