@@ -1,5 +1,8 @@
 name: Build LLVM
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
 
@@ -35,5 +38,4 @@ jobs:
         with:
           tag_name: ${{ env.CURRVERSION }}
           make_latest: true
-          token: ${{ secrets.GIT_RELEASE_TOKEN }}
           files: ./release_bin.zip
