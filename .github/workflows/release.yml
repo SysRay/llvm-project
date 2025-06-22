@@ -33,7 +33,7 @@ jobs:
           -DLLVM_INCLUDE_BENCHMARKS=OFF `
           -DLLVM_INCLUDE_EXAMPLES=OFF `
           -DLLVM_INCLUDE_TESTS=OFF `
-          -DLLVM_TARGETS_TO_BUILD=SPIRV;AMDGPU
+          "-DLLVM_TARGETS_TO_BUILD=SPIRV;AMDGPU"
 
       - name: Compile
         run: cmake --build ./build/
