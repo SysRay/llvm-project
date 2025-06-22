@@ -17,22 +17,22 @@ jobs:
 
       - name: Setup
         run: |
-          cmake \
-          -Sllvm -Bbuild -GNinja \
-          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-          -DLLVM_ENABLE_PROJECTS=mlir \
-          -DCMAKE_C_COMPILER=clang \
-          -DCMAKE_CXX_COMPILER=clang \
-          -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
-          -DCMAKE_INSTALL_PREFIX=./build/.install \
-          -DLLVM_BUILD_TOOLS=OFF \
-          -DLLVM_BUILD_TESTS=OFF \
-          -DMLIR_INCLUDE_INTEGRATION_TESTS=OFF \
-          -DLLVM_BUILD_EXAMPLES=OFF \
-          -DLLVM_ENABLE_WARNINGS=OFF \
-          -DLLVM_INCLUDE_BENCHMARKS=OFF \
-          -DLLVM_INCLUDE_EXAMPLES=OFF \
-          -DLLVM_INCLUDE_TESTS=OFF \
+          cmake `
+          -Sllvm -Bbuild -GNinja `
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo `
+          -DLLVM_ENABLE_PROJECTS=mlir `
+          -DCMAKE_C_COMPILER=clang `
+          -DCMAKE_CXX_COMPILER=clang `
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=1 `
+          -DCMAKE_INSTALL_PREFIX=./build/.install `
+          -DLLVM_BUILD_TOOLS=OFF `
+          -DLLVM_BUILD_TESTS=OFF `
+          -DMLIR_INCLUDE_INTEGRATION_TESTS=OFF `
+          -DLLVM_BUILD_EXAMPLES=OFF `
+          -DLLVM_ENABLE_WARNINGS=OFF `
+          -DLLVM_INCLUDE_BENCHMARKS=OFF `
+          -DLLVM_INCLUDE_EXAMPLES=OFF `
+          -DLLVM_INCLUDE_TESTS=OFF `
           -DLLVM_TARGETS_TO_BUILD=SPIRV;AMDGPU
 
       - name: Compile
