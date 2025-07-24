@@ -487,6 +487,23 @@ def SPIRV_GLFMaxOp : SPIRV_GLBinaryArithmeticOp<"FMax", 40, SPIRV_Float> {
   }];
 }
 
+def SPIRV_GLNMaxOp : SPIRV_GLBinaryArithmeticOp<"NMax", 80, SPIRV_Float> {
+  let summary = "Return maximum of two floating-point operands";
+
+  let description = [{
+   Result is y if x < y, otherwise x. -0 compares less than +0. If one operand is a NaN, the other operand is
+  the result. If both operands are NaN, the result is a NaN.
+  The operands must all be a scalar or vector whose component type is floating-point.
+  Result Type and the type of all operands must be the same type. Results are computed per componen
+
+    #### Example:
+
+    ```mlir
+    %2 = spirv.GL.FMax %0, %1 : f32
+    %3 = spirv.GL.FMax %0, %1 : vector<3xf16>
+    ```
+  }];
+}
 // -----
 
 def SPIRV_GLUMaxOp : SPIRV_GLBinaryArithmeticOp<"UMax", 41, SPIRV_Integer> {
@@ -557,6 +574,24 @@ def SPIRV_GLFMinOp : SPIRV_GLBinaryArithmeticOp<"FMin", 37, SPIRV_Float> {
   }];
 }
 
+def SPIRV_GLNMinOp : SPIRV_GLBinaryArithmeticOp<"NMin", 79, SPIRV_Float> {
+  let summary = "Return minimum of two floating-point operands";
+
+  let description = [{
+    Result is y if y < x, otherwise x. -0 compares less than +0. If one operand is a NaN, the other operand is
+    the result. If both operands are NaN, the result is a NaN.
+    The operands must all be a scalar or vector whose component type is floating-point.
+    Result Type and the type of all operands must be the same type. Results are computed per component.
+
+
+    #### Example:
+
+    ```mlir
+    %2 = spirv.GL.FMin %0, %1 : f32
+    %3 = spirv.GL.FMin %0, %1 : vector<3xf16>
+    ```
+  }];
+}
 // -----
 
 def SPIRV_GLUMinOp : SPIRV_GLBinaryArithmeticOp<"UMin", 38, SPIRV_Integer> {
@@ -1257,4 +1292,87 @@ def SPIRV_GLUnpackHalf2x16Op : SPIRV_GLUnaryOp<"UnpackHalf2x16", 62,
   let assemblyFormat = "$operand attr-dict `:` type($operand) `->` type($result)";
 }
 
+def SPIRV_GLPackSnorm2x16Op : SPIRV_GLUnaryOp<"PackSnorm2x16", 56,
+                                                      SPIRV_Float,
+                                                     SPIRV_Integer> {
+  let summary = "pack two flaots into a 32-bit unsigned integer";
+
+  let description = [{
+    First, converts each component of the normalized floating-point value v into 16-bit integer values. These
+    are then packed into the result.
+    The conversion for component c of v to fixed point is done as follows:
+    round(clamp(c, -1, +1) * 32767.0)
+    The RelaxedPrecision Decoration only affects the conversion step of the instruction.
+    The first component of the vector is written to the least significant bits of the output; the last component is
+    written to the most significant bits.
+    The v operand must be a vector of 2 components whose type is a 32-bit floating-point.
+    Result Type must be a 32-bit integer type.
+
+  }];
+
+  let arguments = (ins
+    SPIRV_ScalarOrVectorOf<SPIRV_Float>:$operand
+  );
+
+  let results = (outs
+    SPIRV_Int32:$result
+  );
+
+  let assemblyFormat = "$operand attr-dict `:` type($operand) `->` type($result)";
+}
+
+def SPIRV_GLPackUnorm2x16Op : SPIRV_GLUnaryOp<"PackUnorm2x16", 57,
+                                                      SPIRV_Float,
+                                                     SPIRV_Integer> {
+  let summary = "pack two flaots into a 32-bit unsigned integer";
+
+  let description = [{
+    First, converts each component of the normalized floating-point value v into 16-bit integer values. These
+    are then packed into the result.
+    The conversion for component c of v to fixed point is done as follows:
+    round(clamp(c, 0, +1) * 65535.0)
+    The RelaxedPrecision Decoration only affects the conversion step of the instruction.
+    The first component of the vector is written to the least significant bits of the output; the last component is
+    written to the most significant bits.
+    The v operand must be a vector of 2 components whose type is a 32-bit floating-point.
+    Result Type must be a 32-bit integer type.
+  }];
+
+  let arguments = (ins
+    SPIRV_ScalarOrVectorOf<SPIRV_Float>:$operand
+  );
+
+  let results = (outs
+    SPIRV_Int32:$result
+  );
+
+  let assemblyFormat = "$operand attr-dict `:` type($operand) `->` type($result)";
+}
+
+def SPIRV_GLPackHalf2x16Op : SPIRV_GLUnaryOp<"PackHalf2x16", 58,
+                                                      SPIRV_Float,
+                                                     SPIRV_Integer> {
+  let summary = "pack two flaots into a 32-bit unsigned integer";
+
+  let description = [{
+    Result is the unsigned integer obtained by converting the components of a two-component floating-point
+    vector to the 16-bit OpTypeFloat, and then packing these two 16-bit integers into a 32-bit unsigned
+    integer. The first vector component specifies the 16 least-significant bits of the result; the second
+    component specifies the 16 most-significant bits.
+    The RelaxedPrecision Decoration only affects the conversion step of the instruction.
+    The v operand must be a vector of 2 components whose type is a 32-bit floating-point.
+    Result Type must be a 32-bit integer type.
+
+  }];
+
+  let arguments = (ins
+    SPIRV_ScalarOrVectorOf<SPIRV_Float>:$operand
+  );
+
+  let results = (outs
+    SPIRV_Int32:$result
+  );
+
+  let assemblyFormat = "$operand attr-dict `:` type($operand) `->` type($result)";
+}
 #endif // MLIR_DIALECT_SPIRV_IR_GL_OPS
