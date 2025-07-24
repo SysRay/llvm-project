@@ -776,12 +776,51 @@ getOrInsertBuiltinVariable(Block &body, Location loc, spirv::BuiltIn builtin,
         builder.create<spirv::GlobalVariableOp>(loc, ptrType, name, builtin);
     break;
   }
+  case spirv::BuiltIn::VertexIndex:
+  case spirv::BuiltIn::InstanceIndex:
   case spirv::BuiltIn::SubgroupId:
   case spirv::BuiltIn::NumSubgroups:
   case spirv::BuiltIn::SubgroupSize:
   case spirv::BuiltIn::SubgroupLocalInvocationId: {
     auto ptrType =
         spirv::PointerType::get(integerType, spirv::StorageClass::Input);
+    std::string name = getBuiltinVarName(builtin, prefix, suffix);
+    newVarOp =
+        builder.create<spirv::GlobalVariableOp>(loc, ptrType, name, builtin);
+    break;
+  }
+
+    // Vertex output built-ins
+  case spirv::BuiltIn::Position: {
+    auto floatType = builder.getF32Type();
+    auto vec4Type = VectorType::get({4}, floatType);
+    auto ptrType =
+        spirv::PointerType::get(vec4Type, spirv::StorageClass::Output);
+    std::string name = getBuiltinVarName(builtin, prefix, suffix);
+    newVarOp =
+        builder.create<spirv::GlobalVariableOp>(loc, ptrType, name, builtin);
+    break;
+  }
+  case spirv::BuiltIn::FragDepth:
+  case spirv::BuiltIn::PointSize: {
+    auto floatType = builder.getF32Type();
+    auto ptrType =
+        spirv::PointerType::get(floatType, spirv::StorageClass::Output);
+    std::string name = getBuiltinVarName(builtin, prefix, suffix);
+    newVarOp =
+        builder.create<spirv::GlobalVariableOp>(loc, ptrType, name, builtin);
+    break;
+  }
+  case spirv::BuiltIn::ClipDistance:
+  case spirv::BuiltIn::CullDistance: {
+    // ClipDistance is an array of f32 outputs
+    // The array size is typically implementation-defined or specified by the
+    // shader Here we assume a common size of 8, but you may need to make this
+    // configurable
+    auto floatType = builder.getF32Type();
+    auto arrayType = spirv::ArrayType::get(floatType, 8);
+    auto ptrType =
+        spirv::PointerType::get(arrayType, spirv::StorageClass::Output);
     std::string name = getBuiltinVarName(builtin, prefix, suffix);
     newVarOp =
         builder.create<spirv::GlobalVariableOp>(loc, ptrType, name, builtin);
@@ -1162,6 +1201,40 @@ Value mlir::spirv::getBuiltinVariableValue(Operation *op,
                                  builtin, integerType, builder, prefix, suffix);
   Value ptr = builder.create<spirv::AddressOfOp>(op->getLoc(), varOp);
   return builder.create<spirv::LoadOp>(op->getLoc(), ptr);
+}
+
+void mlir::spirv::setBuiltinVariableValue(Value value, Value indexOpt,
+                                          spirv::BuiltIn builtin,
+                                          Type integerType, OpBuilder &builder,
+                                          StringRef prefix, StringRef suffix) {
+  Operation *op = value.getDefiningOp();
+  Operation *parent = SymbolTable::getNearestSymbolTable(op->getParentOp());
+  if (!parent) {
+    op->emitError("expected operation to be within a module-like op");
+    return;
+  }
+
+  Location loc = op->getLoc();
+  spirv::GlobalVariableOp varOp =
+      getOrInsertBuiltinVariable(*parent->getRegion(0).begin(), loc, builtin,
+                                 integerType, builder, prefix, suffix);
+
+  Value ptr = builder.create<spirv::AddressOfOp>(loc, varOp);
+
+  if (indexOpt) {
+    // Index into array element, assume array is at depth 1 (e.g., [8 x f32])
+    Value zero = builder.create<spirv::ConstantOp>(
+        loc, builder.getIntegerType(32), builder.getI32IntegerAttr(0));
+
+    Value elementPtr = builder.create<spirv::AccessChainOp>(
+        loc,
+        spirv::PointerType::get(value.getType(), spirv::StorageClass::Output),
+        ptr, ArrayRef<Value>{zero, indexOpt});
+
+    builder.create<spirv::StoreOp>(loc, elementPtr, value);
+  } else {
+    builder.create<spirv::StoreOp>(loc, ptr, value);
+  }
 }
 
 //===----------------------------------------------------------------------===//

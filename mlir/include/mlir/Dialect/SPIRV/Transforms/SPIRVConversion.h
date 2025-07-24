@@ -155,6 +155,18 @@ Value getBuiltinVariableValue(Operation *op, BuiltIn builtin, Type integerType,
                               StringRef prefix = "__builtin__",
                               StringRef suffix = "__");
 
+/// Sets the value for the given `builtin` variable. This function gets or
+/// inserts the global variable associated for the builtin within the nearest
+/// symbol table enclosing `op`. Returns null Value on error.
+///
+/// The global name being generated will be mangled using `preffix` and
+/// `suffix`.
+void setBuiltinVariableValue(Value value, Value indexOpt,
+                             spirv::BuiltIn builtin, Type integerType,
+                             OpBuilder &builder,
+                             StringRef prefix = "__builtin__",
+                             StringRef suffix = "__");
+
 /// Gets the value at the given `offset` of the push constant storage with a
 /// total of `elementCount` `integerType` integers. A global variable will be
 /// created in the nearest symbol table enclosing `op` for the push constant
