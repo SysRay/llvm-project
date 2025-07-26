@@ -29,6 +29,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Get release tag
+        shell: pwsh
         run: |
           $_DATENOW=& Get-Date -uformat %Y%b%d
           "CURRVERSION=$_DATENOW" | Out-File -FilePath $env:GITHUB_ENV -Append
