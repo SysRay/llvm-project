@@ -8,7 +8,21 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - name: Windows
+          os: windows
+          shell: pwsh
+        - name: Linux
+          os: ubuntu
+          shell: bash
+
+    runs-on: ${{matrix.config.os}}-latest
+    defaults:
+      run:
+        shell: ${{matrix.config.shell}}
 
     steps:
       - name: Pull main repo
@@ -31,11 +45,11 @@ jobs:
 
       - name: Build archive
         working-directory: ./build/.install/
-        run: 7z.exe a -tzip -mx=9 ..\..\release_bin.zip .\*
+        run: 7z a -tzip -mx=9 ../../release_bin-${{matrix.config.os}}.zip ./*
 
       - name: Release stuff
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.CURRVERSION }}
           make_latest: true
-          files: ./release_bin.zip
+          files: ./release_bin-${{matrix.config.os}}.zip
