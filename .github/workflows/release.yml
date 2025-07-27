@@ -8,20 +8,35 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - name: Windows
+          os: windows
+          shell: pwsh
+        - name: Linux
+          os: ubuntu
+          shell: bash
+
+    runs-on: ${{matrix.config.os}}-latest
+    defaults:
+      run:
+        shell: ${{matrix.config.shell}}
 
     steps:
       - name: Pull main repo
         uses: actions/checkout@v4
 
       - name: Get release tag
+        shell: pwsh
         run: |
           $_DATENOW=& Get-Date -uformat %Y%b%d
           "CURRVERSION=$_DATENOW" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Setup
         run: |
-          cmake -Sllvm -Bbuild -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DLLVM_ENABLE_PROJECTS=mlir -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_INSTALL_PREFIX="./build/.install" -DLLVM_BUILD_TOOLS=OFF -DLLVM_BUILD_TESTS=OFF -DMLIR_INCLUDE_INTEGRATION_TESTS=OFF -DLLVM_BUILD_EXAMPLES=OFF -DLLVM_ENABLE_WARNINGS=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_INCLUDE_TESTS=OFF -DLLVM_TARGETS_TO_BUILD="SPIRV;AMDGPU"
+          cmake -Sllvm -Bbuild -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DLLVM_ENABLE_PROJECTS=mlir -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_INSTALL_PREFIX="./build/.install" -DLLVM_ENABLE_ZSTD=OFF -DLLVM_BUILD_TOOLS=OFF -DLLVM_BUILD_TESTS=OFF -DMLIR_INCLUDE_INTEGRATION_TESTS=OFF -DLLVM_BUILD_EXAMPLES=OFF -DLLVM_ENABLE_WARNINGS=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_INCLUDE_TESTS=OFF -DLLVM_TARGETS_TO_BUILD="SPIRV;AMDGPU"
 
       - name: Compile
         run: cmake --build "./build/"
@@ -31,11 +46,11 @@ jobs:
 
       - name: Build archive
         working-directory: ./build/.install/
-        run: 7z.exe a -tzip -mx=9 ..\..\release_bin.zip .\*
+        run: 7z a -tzip -mx=9 ../../release_bin-${{matrix.config.os}}.zip ./*
 
       - name: Release stuff
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.CURRVERSION }}
           make_latest: true
-          files: ./release_bin.zip
+          files: ./release_bin-${{matrix.config.os}}.zip
